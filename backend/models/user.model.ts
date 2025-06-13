@@ -20,6 +20,9 @@ const UserSchema: Schema = new Schema(
       unique: true,
       trim: true,
     },
+    profilePic: {
+      type: String,
+    },
     password: {
       type: String,
       required: true,
