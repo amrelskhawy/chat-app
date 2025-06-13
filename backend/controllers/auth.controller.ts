@@ -14,6 +14,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 export const signup = async (req: Request, res: Response): Promise<void> => {
   const { fullName, email, password } = req.body;
 
+  // Validate input fields
+  if (!fullName || !email || !password) {
+    res.status(400).send({ message: "All fields are required" });
+    return;
+  }
+
   try {
     const existingUser = await UserModel.findOne({ email }); // Replace with actual user lookup logic
 
@@ -38,27 +44,34 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Generate a unique username
+    let baseUsername = email.split("@")[0];
+    let username = baseUsername;
+    let counter = 1;
+
+    // Check if username already exists and generate a unique one
+    while (await UserModel.findOne({ username })) {
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+
     // Create a new user instance
     const newUser = new UserModel({
       fullName,
-      username: email.split("@")[0], // username generation
+      username,
       email,
       password: hashedPassword,
     });
 
-    if (!newUser) {
-      res.status(500).send({ message: "Error creating user" });
-      return;
-    }
-
-    generateToken(`${newUser._id as string}`, res);
-
     await newUser.save();
+
+    const token = generateToken(`${newUser._id as string}`, res);
 
     // Here you would typically handle user registration logic
     res.status(201).send({
       message: "User registered successfully",
-      user: { fullName, email },
+      user: { fullName, email, username },
+      token,
     });
   } catch (err) {
     console.error("Error during signup:", err);
