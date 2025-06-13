@@ -1,14 +1,51 @@
 import UserModel from "@models/user.model";
+import { compare } from "bcryptjs";
 import { Request, Response } from "express";
 import { generateToken } from "utils/generate-token";
 import { hashPassword, isValidPassword } from "utils/password";
+import { ILoginBody } from "types/auth.interface";
 
 export const login = async (req: Request, res: Response): Promise<void> => {
-  const { username, password } = req.body;
-  // Here you would typically handle user registration logic
-  res
-    .status(201)
-    .send({ message: "User registered successfully", user: { username } });
+  const { email, password } = req.body as ILoginBody;
+
+  // Validate input fields
+  if (!email || !password) {
+    res.status(400).send({ message: "Email and password are required" });
+    return;
+  }
+
+  try {
+    const user = await UserModel.findOne({ email }); // Replace with actual user lookup logic
+
+    if (!user) {
+      res.status(400).json({ message: "User not found" });
+      return;
+    }
+
+    const isPasswordValid = await compare(password, user.password);
+
+    if (!isPasswordValid) {
+      res.status(400).json({ message: "email or password is incorrect" });
+      return;
+    }
+
+    const token = generateToken(user._id as string, res);
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      user: {
+        fullName: user.fullName,
+        email: user.email,
+        username: user.username,
+        profilePic: user.profilePic || "", // Ensure profilePic is always defined
+      },
+      token,
+    });
+  } catch (err) {
+    console.error("Error during login:", err);
+    res.status(500).send({ message: "Internal server error" });
+    return;
+  }
 };
 
 export const signup = async (req: Request, res: Response): Promise<void> => {
