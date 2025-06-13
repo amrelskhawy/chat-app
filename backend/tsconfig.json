@@ -20,7 +20,8 @@
       "@controllers/*": ["./controllers/*"],
       "@routes/*": ["./routes/*"],
       "@middlewares/*": ["./middlewares/*"],
-      "@models/*": ["./models/*"]
+      "@models/*": ["./models/*"],
+      "@types/*": ["./types/*"]
     }
   },
   "include": ["**/*.ts"],

@@ -1,4 +1,5 @@
 import { hash, compare } from "bcryptjs";
+import bcrypt from "bcryptjs";
 
 // Password validation rules
 const PASSWORD_VALIDATIONS = [
@@ -31,7 +32,7 @@ const PASSWORD_VALIDATIONS = [
 /**
  * Validates password against security requirements
  */
-export const validatePassword = (
+export const isValidPassword = (
   password: string
 ): { valid: boolean; error?: string } => {
   for (const validation of PASSWORD_VALIDATIONS) {
@@ -47,13 +48,9 @@ export const validatePassword = (
  */
 export const hashPassword = async (password: string): Promise<string> => {
   const saltRounds = Number(process.env.SALT_ROUNDS) || 10;
+  const salt = await bcrypt.genSalt(saltRounds);
 
-  const validation = validatePassword(password);
-  if (!validation.valid) {
-    throw new Error(validation.error);
-  }
-
-  return hash(password, saltRounds);
+  return await hash(password, salt);
 };
 
 /**
